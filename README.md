@@ -9,12 +9,11 @@ Here's a short video demonstration. New release adds some features like Image bo
 
 https://www.youtube.com/watch?v=XTeWV9lB_pI
 
-a
+
 [![IMAGE YT Demo](https://github.com/zambari/zDraggablePanel/blob/master/screenshots/yt2.png?raw=true)](https://www.youtube.com/watch?v=XTeWV9lB_pI)
 
 SOME bells and whisless added, like the expandable menu and works started on windows grouping
 
 ![Alt text](https://github.com/zambari/zDraggablePanel/blob/master/screenshots/zDragScreenshot.png?raw=true "Screenshot")
 
-Provided project has an example 'placeholder' panel, with edges you can resize the panel by, minimze button, and a header that can be used to move the panel around. Panels can also be folded and unfolder (also folded and unfolded in gangs) but that functionality could use a bit of love (no way to connectd/disconnect windows at runtime, this needs to be done in the editor)
 
