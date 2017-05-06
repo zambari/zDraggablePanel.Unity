@@ -1,11 +1,11 @@
-﻿//z2k17
+﻿//zzambari : stereoko 2017
 
 using UnityEngine;
 using UnityEngine.UI;
 //using UnityEngine.UI.Extensions;
 //using System.Collections;
 //using System.Collections.Generic;
-
+[ExecuteInEditMode]
 public class zDraggableNameHelper : MonoBehaviour {
 
 	[SerializeField]
@@ -15,7 +15,14 @@ void OnValidate()
 {
     setName();
 }
-
+void OnEnable()
+{
+      setName();
+}
+void Awake()
+{
+      setName();
+}
 public void setName(string s)
 {
 
@@ -32,9 +39,5 @@ void setName()
      if (text!=null) text.text="_";
 
 }
-    void Start()
-    {
-         setName();
 
-    }
 }

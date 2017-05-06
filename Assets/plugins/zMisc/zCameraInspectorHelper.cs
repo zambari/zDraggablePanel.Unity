@@ -1,4 +1,4 @@
-﻿//z2k17
+﻿//zzambari : stereoko 2017
 
 using UnityEngine;
 //using UnityEngine.UI;

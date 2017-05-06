@@ -4,16 +4,82 @@ using UnityEngine.UI;
 
 using System;
 using System.Collections.Generic;
+//[RequireComponent(typeof(zDraggableBorderController))]
 
+[ExecuteInEditMode]
 public class zDraggable : MonoBehaviour
 {
-    [Header("Disables moving")]
-    public bool groupSlave;
-    public int groupID;
-    [Range(1, 15)]
+    public bool refresh = true;
+    [Header("Config")]
+    [Range(1, 16)]
     public float borderWidth = 6;
-    [Range(10, 35)]
-    public float headerHeight = 15;
+    [Range(1, 16)]
+    public float headerHeight = 12;
+    public bool stretchSidesToTop = true;
+    public bool useCorners = true;
+    public bool useLineGraphics = false;
+    //protected static Color _hoverColor;
+    public Color hoverColor = new Color(1, .5f, .1f, 0.2f);
+    public Color neutralColor = new Color(0, 0, 0, 0.1f);
+    public Action folding; // not used in this version
+    public Action unFolding; // not used in this version
+    public Action folded; // not used in this version
+  public bool transparentHeader;
+    public bool loadFromPreferencesOnStart;
+    [HideInInspector]
+    public Vector3[] corners;
+    [SerializeField]
+    [HideInInspector]
+    Image image;
+    [SerializeField]
+    [HideInInspector]
+    Sprite lineH;
+    [SerializeField]
+    [HideInInspector]
+    Sprite lineV;
+
+    [SerializeField]
+    [HideInInspector]
+    zDraggableMenuController menuController;
+    public enum AnchorModes { min, max };//,noSnap 
+    public AnchorModes anchorHorizontal;
+    public AnchorModes anchorVertical;
+    public Vector2 minimalSize = new Vector2(100, 30);
+
+
+    [SerializeField]
+    [HideInInspector]
+    public RectTransform rect;
+    const float minWidth = 60;
+
+    [SerializeField]
+    [HideInInspector]
+
+    Transform textTransform;
+    TimeRamp timeRamp;
+    [SerializeField]
+    [HideInInspector]
+    LayoutElement layoutElement;
+    Vector2 savedSize;
+//    Vector2 foldedSize;
+    bool isMinimized;
+    bool isMaxed;
+    Vector2 savedMax;
+    Vector2 savedMin;
+
+    [SerializeField]
+
+    [HideInInspector]
+    GameObject frame;
+    [SerializeField]
+    [HideInInspector]
+
+    RectTransform[] borderRects;
+    [SerializeField]
+    [HideInInspector]
+    zDraggableBorder[] borders;
+
+    public zDraggableBorder.Borders hoverState;
 
     [SerializeField]
     public static Texture2D horizontalCursor;
@@ -26,76 +92,200 @@ public class zDraggable : MonoBehaviour
     [SerializeField]
     public static Texture2D upRightResizeCursor;
     public static List<zDraggable> draggableList;
-    //protected static Color _hoverColor;
-    public Color hoverColor = Color.red;
-    public Color neutralColor = new Color(0, 0, 0, 0.1f);
-     public Action folding; // not used in this version
-     public Action unFolding; // not used in this version
-     public Action folded; // not used in this version
-    Vector3[] corners = new Vector3[4];
-
     [SerializeField]
-    [HideInInspector]
-    Image image;
-    public enum AnchorModes { noSnap, min, max };
-    public AnchorModes anchorHorizontal;
-    public AnchorModes anchorVertical;
+    protected static GameObject draggableMenu;
+    // [SerializeField]
+    // protected static GameObject draggableLabel;
+    public static Action<zDraggable> newPanel;
+    public void setHoverState(zDraggableBorder.Borders h)
+    {
+        hoverState = h;
+        if (!isDragging)
+        {
+            for (int i = 0; i < borders.Length; i++)
+            {
+                if (borders[i] != null)
+                    borders[i].showHover(h);
+            }
+        }
+    }
 
-    public Vector2 minimalSize = new Vector2(200, 100);
+    Image bgImage;
+    RawImage bgImageRaw;
+    Color startColor;
+    public void setOpacity(float f)
+    {
+        if (bgImageRaw != null)
+            bgImageRaw.color = new Color(startColor.r, startColor.g, startColor.b, f);
+        else
+           if (bgImage != null)
+            bgImage.color = new Color(startColor.r, startColor.g, startColor.b, f);
+    }
 
-    //    Vector2 startDimensions;
-    //    Vector2 scaledDelta;
-    RectTransform rect;
-    const float minWidth = 60;
-//    bool isFolded;
+    void OnValidate()
+    {
+        if (image == null) image = GetComponent<Image>();
 
-    [SerializeField]
-    [HideInInspector]
-    RectTransform content;
-    [SerializeField]
-    [HideInInspector]
-    Transform textTransform;
-     TimeRamp timeRamp;
-     
-    Vector2 savedSize;
-       Vector2 foldedSize;
-    bool isMinimized;
-    bool isMaxed;
-    Vector2 savedMax;
-    Vector2 savedMin;
+        if (rect == null) rect = GetComponent<RectTransform>();
+        setHorizontalPivot(AnchorModes.min);
+        setVerticalPivot(AnchorModes.max);
+        if (refresh) refresh = false;
+        if (!gameObject.activeInHierarchy || !enabled) return;
+        isDragging = false;
+        if (headerHeight < borderWidth) headerHeight = borderWidth;
+        loadResources();
+
+        setAnchorAndPivotBasedOnAnchoring();
+
+        createBorders();
+
+        if (layoutElement == null) layoutElement = GetComponent<LayoutElement>();
+        if (layoutElement == null) layoutElement = gameObject.AddComponent<LayoutElement>();
+        layoutElement.preferredHeight = rect.rect.width;
+        layoutElement.preferredWidth = rect.rect.height;
+
+
+        if (menuController == null) menuController = GetComponentInChildren<zDraggableMenuController>();
+        if (menuController != null) menuController.setHeight(headerHeight);
+    }
+
+    public void saveAllLocation()
+    {
+        for (int i = 0; i < draggableList.Count; i++)
+            draggableList[i].saveLocation();
+    }
+    public void loadAllLocation()
+    {
+        for (int i = 0; i < draggableList.Count; i++)
+            draggableList[i].loadLocation();
+    }
+    public void saveLocation()
+    {
+        setHorizontalPivot(AnchorModes.min);
+        setVerticalPivot(AnchorModes.max);
+        PlayerPrefsX.SetVector3(name + "position", rect.position);
+        PlayerPrefsX.SetVector3(name + "size", rect.sizeDelta);
+        PlayerPrefsX.SetBool(name + "horiz", (anchorHorizontal == AnchorModes.max));
+        PlayerPrefsX.SetBool(name + "vert", (anchorVertical == AnchorModes.max));
+        PlayerPrefsX.SetVector3(name + "scale", rect.localScale);
+        PlayerPrefsX.SetBool(name + "saved", true);
+        Debug.Log(name + " saved ", gameObject);
+    }
+    public void loadLocation()
+    {
+        bool isSaved = PlayerPrefsX.GetBool(name + "saved");
+        if (!isSaved)
+        {
+            Debug.Log(name + "  no Saved preferences", gameObject);
+            return;
+        }
+        setHorizontalPivot(AnchorModes.min);
+        setVerticalPivot(AnchorModes.max);
+
+
+        if (PlayerPrefsX.GetBool(name + "horiz")) setHorizontalPivot(AnchorModes.max); else setHorizontalPivot(AnchorModes.min);
+        if (PlayerPrefsX.GetBool(name + "vert")) setVerticalPivot(AnchorModes.max); else setHorizontalPivot(AnchorModes.min);
+        setDimensions(PlayerPrefsX.GetVector3(name + "size"));
+        rect.position = PlayerPrefsX.GetVector3(name + "position");
+        rect.localScale = PlayerPrefsX.GetVector3(name + "scale");
+
+        Debug.Log(name + " loaded ", gameObject);
+    }
+    void createBorders()
+    {
+        int numBorders = System.Enum.GetNames(typeof(zDraggableBorder.Borders)).Length - 2;
+        if (frame == null)
+        {
+            RectTransform frameRect;
+            frame = new GameObject("Frame");
+            frameRect = frame.AddComponent<RectTransform>();
+            frameRect.SetParent(transform);
+            frameRect.offsetMax = new Vector2(0, 0);
+            frameRect.offsetMin = new Vector2(0, 0);
+            frameRect.anchorMin = new Vector2(0, 0);
+            frameRect.anchorMax = new Vector2(1, 1);
+            frameRect = frame.GetComponent<RectTransform>();
+            borderRects = new RectTransform[numBorders];
+            borders = new zDraggableBorder[numBorders];
+            GameObject thisSegment;
+            Transform header = null;
+            RectTransform segRect;
+            for (int i = 0; i < numBorders; i++)
+            {
+                thisSegment = new GameObject(((zDraggableBorder.Borders)i).ToString());
+                segRect = thisSegment.AddComponent<RectTransform>();
+                segRect.SetParent(frameRect);
+                segRect.offsetMax = new Vector2(0, 0);
+                segRect.offsetMin = new Vector2(0, 0);
+                segRect.anchorMin = new Vector2(0, 0);
+                segRect.anchorMax = new Vector2(1, 1);
+                zDraggableBorder border = thisSegment.AddComponent<zDraggableBorder>();
+
+                border.setDirection((zDraggableBorder.Borders)i);
+                border.setBorderWidth(borderWidth, headerHeight);
+                borders[i] = border;
+                borderRects[i] = segRect;
+                if (i == (int)zDraggableBorder.Borders.Drag)
+                {
+                    header = thisSegment.transform;
+                    HorizontalLayoutGroup headerLayout = thisSegment.AddComponent<HorizontalLayoutGroup>();
+                    headerLayout.childControlWidth = true;
+                    headerLayout.childForceExpandWidth = true;
+                }
+
+            }
+            if (draggableMenu == null) draggableMenu = Resources.Load("zDraggableMenu") as GameObject;
+
+            if (draggableMenu != null)
+            {
+                GameObject thisMenu = Instantiate(draggableMenu, frame.transform);
+
+                thisMenu.transform.SetParent(frame.transform);
+                thisMenu.GetComponent<RectTransform>().anchoredPosition = Vector3.zero;
+                menuController = thisMenu.GetComponent<zDraggableMenuController>();
+
+            }
+            else Debug.Log("no menu");
+
+        }
+        for (int i = 0; i < numBorders; i++)
+        {
+            borders[i].setDirection((zDraggableBorder.Borders)i);
+            if (i == (int)zDraggableBorder.Borders.L || i == (int)zDraggableBorder.Borders.R)
+                if (useLineGraphics) borders[i].setImage(lineV); else borders[i].setImage(null);
+            if (i == (int)zDraggableBorder.Borders.T || i == (int)zDraggableBorder.Borders.B)
+                if (useLineGraphics) borders[i].setImage(lineH); else borders[i].setImage(null);
+            borders[i].setBorderWidth(borderWidth, headerHeight);
+        }
+    }
+
+
     public void setHorizontalPivot(AnchorModes newAnchoring)
     {
-
         anchorHorizontal = newAnchoring;
-        if (!groupSlave&&groupID!=0)
-          for (int i=0;i<draggableList.Count;i++)
-            {
-                zDraggable d=draggableList[i];
-                if (d.groupID == groupID && d.groupSlave && d != this)
-                    d.setHorizontalPivot(newAnchoring);
-            }
-
+        if (menuController != null) menuController.rightAlingment(newAnchoring == AnchorModes.min);
     }
     public void setVerticalPivot(AnchorModes newAnchoring)
     {
-
         anchorVertical = newAnchoring;
         setAnchorAndPivotBasedOnAnchoring();
-       if (!groupSlave&&groupID!=0)
-            for (int i=0;i<draggableList.Count;i++)
-            {
-                zDraggable d=draggableList[i];
-                if (d.groupID == groupID && d.groupSlave && d != this)
-                    d.setHorizontalPivot(newAnchoring);
-            }
-
     }
     void setAnchoringCorners()
     {
         rect.GetWorldCorners(corners);
-        if (corners[0].x < Screen.width - corners[3].x) anchorHorizontal = AnchorModes.min; else anchorHorizontal = AnchorModes.max;
-        if (corners[0].y < Screen.height - corners[1].y) anchorVertical = AnchorModes.min; else anchorVertical = AnchorModes.max;
-        setAnchorAndPivotBasedOnAnchoring();
+
+        if (!isDragging)
+        {
+            if (corners[0].x < Screen.width - corners[3].x) setHorizontalPivot(AnchorModes.min); else setHorizontalPivot(AnchorModes.max);
+            if (corners[0].y < Screen.height - corners[1].y) setVerticalPivot(AnchorModes.min); else setVerticalPivot(AnchorModes.max);
+            if (menuController != null) menuController.rightAlingment(anchorHorizontal == AnchorModes.min);
+
+            setAnchorAndPivotBasedOnAnchoring();
+        }
+        else if (menuController != null)
+            if (corners[0].x < Screen.width - corners[3].x) menuController.rightAlingment(true); else menuController.rightAlingment(false);
+
+
 
     }
 
@@ -111,57 +301,18 @@ public class zDraggable : MonoBehaviour
             if (upLeftResizeCursor == null) upLeftResizeCursor = Resources.Load("ResizeUpLeft") as Texture2D; ;
             if (upRightResizeCursor == null) upRightResizeCursor = Resources.Load("ResizeUpRight") as Texture2D;
         }
-    }
-public void setBorderWidth(float v)
-{
-    /// <summary>
-    /// THIS IS A DEMO FUNCtON, NEEDS TO BE REMOVED 
-    /// </summary>
-      borderWidth=v;
-              Transform t = transform.Find("CONTENT");
-        if (t != null) content = t.GetComponent<RectTransform>();
-        if (content != null)
-            content.offsetMax = new Vector2(0, -headerHeight+borderWidth);
-      zDraggableBorder[] borders = GetComponentsInChildren<zDraggableBorder>();
-        foreach (zDraggableBorder b in borders)
-        {
-            b.setBorderWidth(borderWidth);
-            b.setHeaderHeight(headerHeight);
-        }
-}
-    void OnValidate()
-    {
-        if (textTransform == null)
-        {
-            var b = GetComponentInChildren<zDraggableNameHelper>();
-            b.setName(gameObject.name);
-            if (b != null) textTransform = b.transform;
-        }
-        loadResources();
-        if (image == null) image = GetComponent<Image>();
+        if (lineH == null) lineH = Resources.Load<Sprite>("lineH") as Sprite;
+        if (lineV == null) lineV = Resources.Load<Sprite>("lineV") as Sprite;
 
-        if (rect == null) rect = GetComponent<RectTransform>();
-        setAnchorAndPivotBasedOnAnchoring();
-        Transform t = transform.Find("CONTENT");
-        if (t != null) content = t.GetComponent<RectTransform>();
-        if (content != null)
-            content.offsetMax = new Vector2(0, -headerHeight+borderWidth);
-        zDraggableBorder[] borders = GetComponentsInChildren<zDraggableBorder>();
-        foreach (zDraggableBorder b in borders)
-        {
-            b.setBorderWidth(borderWidth);
-            b.setHeaderHeight(headerHeight);
-        }
     }
-
     public void setAnchorAndPivotBasedOnAnchoring()
     {
         float x = 0;
         float y = 0;
-        if (anchorHorizontal == AnchorModes.noSnap) x = 0.5f;
+        // if (anchorHorizontal == AnchorModes.noSnap) x = 0.5f;
         if (anchorHorizontal == AnchorModes.min) x = 0f;
         if (anchorHorizontal == AnchorModes.max) x = 1f;
-        if (anchorVertical == AnchorModes.noSnap) y = 0.5f;
+        //  if (anchorVertical == AnchorModes.noSnap) y = 0.5f;
         if (anchorVertical == AnchorModes.min) y = 0f;
         if (anchorVertical == AnchorModes.max) y = 1f;
         Vector2 t = new Vector2(x, y);
@@ -174,10 +325,7 @@ public void setBorderWidth(float v)
             rect.pivot = t;
             transform.localPosition = pos + getOffset() - offset;
         }
-        if (groupSlave) 
-        {    rect.pivot=new Vector2(rect.pivot.x,1);
-            rect.anchoredPosition=new Vector2(rect.anchoredPosition.x,-5);
-        }
+
     }
 
     Vector3 getOffset()
@@ -185,22 +333,54 @@ public void setBorderWidth(float v)
         return new Vector3(rect.sizeDelta.x * transform.localScale.x * rect.pivot.x,
                         rect.sizeDelta.y * transform.localScale.y * rect.pivot.y, 0);
     }
+
+    void OnEnable()
+    {
+        OnValidate();
+    }
+
+    void OnDisable()
+    {
+        //    if (frame != null) if (Application.isPlaying) Destroy(frame); else DestroyImmediate(frame);
+        //        if (layoutElement != null) if (Application.isPlaying) Destroy(layoutElement); else DestroyImmediate(layoutElement);
+    }
     void timeRampsetup()
     {
-           float t = .6f;
-          timeRamp = new TimeRamp(t);
-          timeRamp.smoothStep=true;
+        float t = .6f;
+        timeRamp.duration = t;
+        timeRamp.smoothStep = true;
         timeRamp.CallbackZero(callbackWhenFolded);
     }
     private void Awake()
     {
-         timeRampsetup();
+        bgImage = GetComponentInChildren<Image>();
+        bgImageRaw = GetComponentInChildren<RawImage>();
+        if (bgImageRaw != null) startColor = bgImageRaw.color;
+        else
+       if (bgImage != null) startColor = bgImage.color;
+
+        timeRampsetup();
         rect = GetComponent<RectTransform>();
+        setHorizontalPivot(AnchorModes.min);
+        setVerticalPivot(AnchorModes.max);
+        savedSize = new Vector2(rect.rect.width, rect.rect.height);
+
+        Vector3 pos = rect.position;
+        /*   rect.pivot=new Vector2(0,1);
+          
+              
+        rect.anchorMin=new Vector2(0,0);
+        rect.anchorMax=new Vector2(0,0);*/
+
+
+        corners = new Vector3[4];
         OnValidate();
         if (draggableList == null) draggableList = new List<zDraggable>();
         draggableList.Add(this);
+        rect.position = pos;
+        setDimensions(savedSize);
+      
     }
-
     public void setWidth(float newWidth)
     {
         rect.sizeDelta = new Vector2(newWidth, rect.sizeDelta.y);
@@ -208,7 +388,6 @@ public void setBorderWidth(float v)
     }
     public void setDimensions(Vector2 newDim)
     {
-        if (groupSlave) newDim.x = rect.sizeDelta.x;
 
         if (newDim.x < minimalSize.x) newDim.x = minimalSize.x;
         if (newDim.y < minimalSize.y) newDim.y = minimalSize.y;
@@ -221,23 +400,37 @@ public void setBorderWidth(float v)
                 textTransform.localScale = new Vector3(t, t, t);
             }
             else textTransform.localScale = Vector3.one;
-
-        if (!groupSlave && groupID!=0)
-            foreach (zDraggable d in draggableList)
-                if (d.groupID == groupID && d.groupSlave && d != this)
-                    d.setWidth(newDim.x);
-       
+        if (layoutElement != null)
+        {
+            layoutElement.preferredHeight = rect.sizeDelta.x;
+            layoutElement.preferredWidth = rect.sizeDelta.y;
+        }
     }
 
     public void setScale(float scale)
     {
-        //   if (parent == null)
         transform.localScale = new Vector3(scale, scale, scale);
-
     }
+    public void minimize()
+{
+
+    minimalSize = new Vector2(20, 0);
+    savedSize=rect.rect.size;
+    timeRamp.duration=0.5f;
+    timeRamp.curveShape=TimeRamp.CurveShapes.smooth;
+
+    timeRamp.JumpOne(); 
+    timeRamp.GoZero();
+
+} 
+ public void restore()
+{
+timeRamp.GoOne();
+
+
+}
     public void sizeSmall()
     {
-        if (groupSlave) return;
 
         if (isMinimized) return; else savedSize = rect.sizeDelta;
         // 
@@ -245,13 +438,12 @@ public void setBorderWidth(float v)
         if (rect.localScale.x < 0.6f)
         {
             isMinimized = true;
-            rect.sizeDelta = new Vector2(150, headerHeight);
+            rect.sizeDelta = new Vector2(150, 0);
             if (textTransform != null) textTransform.localScale = Vector3.one * 1.5f;
         }
     }
     public void sizeNormal()
     {
-        if (groupSlave) return;
         if (isMinimized)
             rect.sizeDelta = savedSize;
         rect.localScale = Vector3.one;
@@ -269,70 +461,89 @@ public void setBorderWidth(float v)
 
     public void sizeBig()
     {
-        if (groupSlave) return;
         if (isMaxed) return;
         if (isMinimized)
         {
             sizeNormal(); return;
         }
         rect.sizeDelta = savedSize;
-        foldedSize=new Vector2(savedSize.x,headerHeight+2);
-        rect.localScale = rect.localScale * 1.5f;
 
+        //rect.localScale = rect.localScale * 1.5f;
+        //  OnDragOperationEnded();
         if (rect.localScale.x > 2)
         {
             rect.localScale = Vector3.one;
             isMaxed = true;
-            savedMax = rect.offsetMax;
-            savedMin = rect.offsetMin;
-            rect.offsetMax = new Vector2(rect.offsetMax.x, 0);
-            rect.offsetMin = new Vector2(rect.offsetMin.x, 0);
+            //   savedMax = rect.offsetMax;
+            //    savedMin = rect.offsetMin;
+            // rect.offsetMax = new Vector2(rect.offsetMax.x, 0);
+            // rect.offsetMin = new Vector2(rect.offsetMin.x, 0);
         }
+    }
+    public bool isDragging;
+    public void OnDragOperation()
+    {
+        setAnchoringCorners();
+    }
+    public void OnDragOperationStart()
+    {
+        isDragging = true;
+
     }
     public void OnDragOperationEnded()
     {
+
+        isDragging = false;
         setAnchoringCorners();
+        savedSize = rect.sizeDelta;
+        setHoverState(hoverState);
+
     }
     private void Start()
     {
         timeRampsetup();
 
-        #if USE_SETTINGS
+#if USE_SETTINGS
                 {
                         scaleSettingSlider =zSettings.addSlider("PanelSize", "Scales");
                         scaleSettingSlider.setRange(0.2f, 3);
                         scaleSettingSlider.valueChanged+=setScale;
                         scaleSettingSlider.defValue=(0.5f);
                 }
-        #endif
+#endif
         //  if (startFolded) timeRamp.JumpZero();
         //     else 
-            savedSize=rect.sizeDelta;
-            foldedSize=new Vector2(savedSize.x,headerHeight+2);
-            unFold();
-            //timeRamp.Start();
+        savedSize = rect.sizeDelta;
+   //     foldedSize = new Vector2(savedSize.x, 0);
+        unFold();
+        rect.GetWorldCorners(corners);
+        //timeRamp.Start();
+        setAnchoringCorners();
+        if (newPanel != null) newPanel(this);
+
+          if (loadFromPreferencesOnStart) loadLocation();
     }
 
     public void updateLayout()
     {
         LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
     }
- 
+
     public void fold()
-    {   Debug.Log("folding");
-        
+    { //  Debug.Log("folding");
+
         setVerticalPivot(AnchorModes.max);
-    //     savedSize=rect.sizeDelta;
-         foldedSize=new Vector2(savedSize.x,headerHeight+2);
-        
-        if (timeRamp == null) timeRampsetup();
+        //     savedSize=rect.sizeDelta;
+      //  foldedSize = new Vector2(savedSize.x, 0);
+
+
         timeRamp.GoZero();
         if (folding != null) folding.Invoke();
     }
     public void unFold()
     {
         setVerticalPivot(AnchorModes.max);
-       // isFolded = false;
+        // isFolded = false;
         timeRamp.GoOne();
         if (unFolding != null) unFolding.Invoke();
     }
@@ -341,64 +552,30 @@ public void setBorderWidth(float v)
         if (folded != null)
         {
             folded.Invoke();
-          //  isFolded = true;
+            //  isFolded = true;
         }
         //    //    if (disableOnFold) gameObject.SetActive(false);
     }
     public void foldInS(float t)
     {
-        Invoke("fold",t);
+        Invoke("fold", t);
     }
     public void unFoldInS(float t)
     {
-        Invoke("unFold",t);
+        Invoke("unFold", t);
     }
     public void toggleFold()
     {
         if (timeRamp.value > 0)
-            {
-                fold();
-     if (!groupSlave)
-            foreach (zDraggable d in draggableList)
-                if (d.groupID == groupID && d != this)
-                    d.foldInS(UnityEngine.Random.value/5);
-            }
-        else
-           { unFold();
-        //   if (!groupSlave)
-            foreach (zDraggable d in draggableList)
-                if (d.groupID == groupID && d != this)
-                    d.unFoldInS(UnityEngine.Random.value/5);
-           }
+            fold();
     }
 
     public static float overShootCurve(float f)
     {
-         return (2 - f) * (2 - f) * f;
+        return (2 - f) * (2 - f) * f;
     }
 
-    bool checkIfOutsideScreenH()
-    {
-        return (corners[0].x < borderWidth ||
-             corners[2].x + borderWidth > Screen.width
-          );
-    }
-    bool checkIfOutsideScreenV()
-    {
 
-        return
-             corners[1].y + borderWidth > Screen.height ||
-
-             corners[3].y < borderWidth;
-    }
-    bool checkIfOutsideScreen()
-    {
-        float k = 2 * borderWidth;
-        return (corners[0].x < k ||
-             corners[1].y + k > Screen.height ||
-             corners[2].x + k > Screen.width ||
-             corners[3].y < k);
-    }
     public void moveRelative(Vector3 relPos)
     {
         Vector3 t = rect.localPosition;
@@ -407,45 +584,51 @@ public void setBorderWidth(float v)
     }
     public void setPosition(Vector3 newPos)
     {
-        if (groupSlave) return;
         Vector3 t = rect.localPosition;
         rect.localPosition = new Vector2(newPos.x, t.y);
         rect.GetWorldCorners(corners);
         if (corners[0].x < borderWidth ||
-             corners[2].x + borderWidth > Screen.width) newPos.x = t.x;
+                corners[2].x + borderWidth > Screen.width) newPos.x = t.x;
         rect.localPosition = newPos;
         rect.GetWorldCorners(corners);
         if (corners[1].y + borderWidth > Screen.height ||
-               corners[3].y < borderWidth)
+              corners[3].y < borderWidth)
         {
             newPos.y = t.y;
-
             rect.localPosition = newPos;
         }
-
-    }
-    /*if (group != 0)
-    {
-        int k=0;
-        while (k<draggableList.Count && draggableList[k]!=this) k++;
-
-        for (int i = k; i < draggableList.Count; i++)
-        {
-            if (draggableList[i].group == group && draggableList[i] != this)
-                draggableList[i].moveRelative(newPos - t);
-        }
+        rect.GetWorldCorners(corners);
+        findMatchingEdges();
     }
 
-*/
-
-
-    private void Update()
+    void findMatchingEdges()
     {
+        /*
+                Vector2 TL = corners[1];
+                Vector2 TR = corners[2];
+        //        zDraggable close;
+                for (int i = 0; i < draggableList.Count; i++)
+                {
+                    zDraggable d = draggableList[i];
+                    if (d == this) continue;
+                    Vector3 BL = d.corners[0];
+                    Vector3 BR = d.corners[3];
+
+               //     Debug.Log("distance between " + name + " and " + d.name + " is vertical " + (BL.y - TL.y) + " h1 = " + (TL.x - BL.x) + " h2" + (TR.x - BR.x));
+
+                }*/
+    }
+
+   private void Update()
+    {
+        if (!Application.isPlaying) return;
         if (timeRamp.isRunning)
         {
-            float k=overShootCurve(timeRamp.value);
-            setDimensions((1-k)*foldedSize+savedSize*k);
+            float k = overShootCurve(timeRamp.value);
+            setDimensions((1 - k) * minimalSize + savedSize * k);
         }
+        //    if (Input.GetKeyDown("s")) saveLocation();
+        //     if (Input.GetKeyDown("l")) loadLocation();
     }
 
 }
