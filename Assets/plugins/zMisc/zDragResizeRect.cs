@@ -6,17 +6,17 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Image))]
-
+[ExecuteInEditMode]
 public class zDragResizeRect : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IDragHandler, IBeginDragHandler, IEndDragHandler
 {
 
     [SerializeField]
-    
+
     public float borderWidth = 6;
     [SerializeField]
-  
 
-   public  float headerHeight = 20;
+    public bool hasColorProvider;
+    public float headerHeight = 20;
 
     [SerializeField]
     [HideInInspector]
@@ -26,26 +26,41 @@ public class zDragResizeRect : MonoBehaviour, IPointerEnterHandler, IPointerExit
     [HideInInspector]
     public enum Borders { Drag, L, T, R, B, TL, TR, BR, BL, None, Disabled }
     public Borders resizeDirection;
-  
-    
+
+
 
     public RectTransform targetRect;
     [SerializeField]
     [HideInInspector]
     protected Image image;
-   protected bool isDragging;
-   protected RectTransform rect;
-   protected virtual void Awake()
+    protected bool isDragging;
+    protected RectTransform rect;
+    protected virtual void Awake()
     {
-        if (rect==null) rect=GetComponent<RectTransform>();
-        if (rect==null) rect=gameObject.AddComponent<RectTransform>();
+        checkReferences();
+    }
+    void checkReferences()
+    {
+        if (rect == null) rect = GetComponent<RectTransform>();
+        if (rect == null) rect = gameObject.AddComponent<RectTransform>();
         if (targetRect == null) targetRect = GetComponentInParent<RectTransform>();
-        image = GetComponent<Image>();
+        if (image == null) image = GetComponent<Image>();
         if (image == null) image = gameObject.AddComponent<Image>();
+        if (colorProvider == null) colorProvider = GetComponentInParent<IProvideColors>();
+        if (colorProvider != null)
+        {
+
+            var a = colorProvider.getColorsChangedAction();
+            a -= colorChanged;
+            a += colorChanged;
+
+        }
+        hasColorProvider = (colorProvider == null);
+        colorChanged();
     }
     public void setTargetRect(RectTransform target)
     {
-        targetRect=target;
+        targetRect = target;
     }
     protected void highlight()
     {
@@ -53,12 +68,14 @@ public class zDragResizeRect : MonoBehaviour, IPointerEnterHandler, IPointerExit
     }
     void colorChanged()
     {
-        if (colorProvider != null) image.color = colorProvider.getNormalColor();
+        if (colorProvider != null)
+            image.color = colorProvider.getNormalColor();
+   
     }
     protected void restore()
     {
         if (colorProvider != null) image.color = colorProvider.getNormalColor();
-     }
+    }
     public void setImage(Sprite newSprite)
     {
         if (image == null) image = GetComponent<Image>();
@@ -90,14 +107,14 @@ public class zDragResizeRect : MonoBehaviour, IPointerEnterHandler, IPointerExit
     void setAnchors()
 
     {
-        if (rect==null) rect=GetComponent<RectTransform>();
+        if (rect == null) rect = GetComponent<RectTransform>();
         switch (resizeDirection)
         {
             case Borders.L:
                 rect.anchorMin = new Vector2(0, 0);
                 rect.anchorMax = new Vector2(0, 1);
                 rect.pivot = new Vector2(1, 0);
-               // rect. setAnchorsY(0,1);
+                // rect. setAnchorsY(0,1);
                 break;
             case Borders.R:
                 rect.anchorMin = new Vector2(1, 0);
@@ -146,15 +163,14 @@ public class zDragResizeRect : MonoBehaviour, IPointerEnterHandler, IPointerExit
         else
             rect.anchoredPosition = new Vector2(0, 0);
     }
-     public void setDirection(Borders newDir)
+    public void setDirection(Borders newDir)
     {
         resizeDirection = newDir;
         setAnchors();
     }
     public void setBorderWidth(float newBorderWidth, float newHeaderHeight)
     {
-     
-
+        checkReferences();
         borderWidth = newBorderWidth;
         headerHeight = newHeaderHeight;
         if (rect == null) rect = GetComponent<RectTransform>();
@@ -163,8 +179,9 @@ public class zDragResizeRect : MonoBehaviour, IPointerEnterHandler, IPointerExit
         {
             case Borders.L:
                 //rect.sizeDelta = new Vector2(borderWidth, headerHeight);
-                  rect.sizeDelta = new Vector2(borderWidth, targetRect.sizeDelta.y);
-            break;
+                rect.sizeDelta = new Vector2(borderWidth, 0);
+                //   rect.sizeDelta = new Vector2(borderWidth, targetRect.sizeDelta.y);
+                break;
             case Borders.R:
                 rect.sizeDelta = new Vector2(borderWidth, 0);
                 break;
@@ -172,7 +189,7 @@ public class zDragResizeRect : MonoBehaviour, IPointerEnterHandler, IPointerExit
                 rect.sizeDelta = new Vector2(0, borderWidth);
                 break;
             case Borders.BR:
-                rect.sizeDelta = new Vector2(borderWidth,borderWidth);
+                rect.sizeDelta = new Vector2(borderWidth, borderWidth);
                 break;
             case Borders.BL:
                 rect.sizeDelta = new Vector2(borderWidth, borderWidth);
@@ -190,11 +207,11 @@ public class zDragResizeRect : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
             case Borders.Drag:
                 rect.sizeDelta = new Vector2(2 * borderWidth, headerHeight);
-                rect.anchoredPosition = new Vector2(rect.anchoredPosition.x,borderWidth);
+                rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, borderWidth);
                 break;
         }
         if (resizeDirection != Borders.BR && resizeDirection != Borders.BL)
-             if (image == null) image = GetComponent<Image>();
+            if (image == null) image = GetComponent<Image>();
 
         restore();
 
@@ -204,10 +221,8 @@ public class zDragResizeRect : MonoBehaviour, IPointerEnterHandler, IPointerExit
     protected virtual void OnValidate()
     {
         if (!gameObject.activeInHierarchy) return;
-        if (colorProvider == null) colorProvider = GetComponentInParent<zHoverColorProvider>();
-        if (colorProvider != null) { var a=colorProvider.getColorsChangedAction(); a += colorChanged; }
-        if (targetRect == null) targetRect = GetComponentInParent<RectTransform>();
-        if (image == null) image = GetComponent<Image>();
+        checkReferences();
+
         switch (resizeDirection)
         {
             case Borders.L:
@@ -235,15 +250,15 @@ public class zDragResizeRect : MonoBehaviour, IPointerEnterHandler, IPointerExit
         showHover(Borders.None);
         setBorderWidth(borderWidth, headerHeight);
         setAnchors();
-        LayoutElement l=GetComponent<LayoutElement>();
-        if (l==null) l=gameObject.AddComponent<LayoutElement>();
-        l.ignoreLayout=true;
+        LayoutElement l = GetComponent<LayoutElement>();
+        if (l == null) l = gameObject.AddComponent<LayoutElement>();
+        l.ignoreLayout = true;
     }
 
     public virtual void OnPointerEnter(PointerEventData e)
     {
         if (resizeDirection == Borders.None) return;
-             highlight();
+        highlight();
         Cursor.SetCursor(hoverCursor, new Vector2(16, 16), CursorMode.Auto);
     }
     public virtual void OnPointerExit(PointerEventData e)
@@ -291,7 +306,7 @@ public class zDragResizeRect : MonoBehaviour, IPointerEnterHandler, IPointerExit
         Vector3 drag = Input.mousePosition - lastCursorPosition;
         if (resizeDirection == Borders.Drag)
         {
-            targetRect.localPosition=startPosition+drag;
+            targetRect.localPosition = startPosition + drag;
             //  draggable.setPosition(startPosition + drag);
             return;
         }
