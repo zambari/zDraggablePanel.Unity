@@ -68,7 +68,7 @@ public struct TimeRamp
     public bool triggerCallbacksOnDirectionChange;
     public float duration;
 
-
+#pragma warning disable 414
     bool _hasCallbackOne;
     bool _hasCallbackZero;
     public bool pingPong;
@@ -507,7 +507,7 @@ public struct TimeRamp
     public TimeRamp ClearCallbacks()
     {
         _hasCallbackOne = false;
-        _hasCallbackZero = false;
+        _hasCallbackOne = false;
         return this;
 
     }

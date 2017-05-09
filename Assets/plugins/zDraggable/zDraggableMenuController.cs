@@ -11,7 +11,7 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
 {
     zDraggable draggable;
     public GameObject menu;
-    RectTransform hoverRect;
+//    RectTransform hoverRect;
     public Text labelText;
     public RectTransform labelRect;
     public bool showMenuPreview;
@@ -77,10 +77,7 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
     {
         rect = GetComponent<RectTransform>();
         draggable = GetComponentInParent<zDraggable>();
-
-        hoverRect = hoverButton.GetComponent<RectTransform>();
-
-        showMenu();
+       // showMenu();
        // hideMenu();
     }
     void OnValidate()
@@ -90,7 +87,6 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
     public void toggleMinimize()
     {
         hideMenu();
-
         draggable.toggleFold();
     }
     public void minimize()
@@ -114,8 +110,6 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
         hideMenu();
         draggable.saveLocation();
     }
-
-
 
     public void load()
     {
