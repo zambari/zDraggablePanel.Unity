@@ -1,4 +1,17 @@
-# zDraggablePanel (Unity3D)
+# zDraggablePanel v2 (Unity3D)
+
+Changes: masisvely simplified code, rarely used fragments revmoved
+
+Object creation moved to a seperate creator class:
+
+
+Instructions:
+1) Create empty panel
+2) Add DragPanelCreator
+3) check 'create' checkbox
+
+
+
 A little bit bootstrap UI, provides a way to have multiple windows of whatever floating on canvas, each window can be moved and resized. nothing too fancy but something I tend to use a lot - early on with the project there's plenty of debug stuff on screen and I got tired of writing IPointerEnterHandler's for each and every window. Hence comes this little template.
 
 Last release focuses on ease of use - Whilst there is one prefab still neded (or two if you want to turn your panels off and on), but the script will now build the borders aroud a given panel on its own, in editor window, so using it requires just adding a component 
