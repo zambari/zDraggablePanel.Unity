@@ -26,6 +26,9 @@
 // v0.63 toHex
 // v0.64 makecolor
 // v0.65 c null warning
+// v0.66 dump to base64 rendertexure extention
+// v0.67 rect extensions moved to a diff classs
+// v0.68 showhide conditional
 
 using UnityEngine;
 using System;
@@ -37,7 +40,7 @@ using System.IO;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-using Z.Extras;
+//using Z.Extras;
 
 /// oeverrides zRectExtensions
 
@@ -150,6 +153,32 @@ public static class zExt
 #endif
 
     }
+
+ 
+
+
+    public static string DumpToJPGBase64(this RenderTexture rt, int quality = 90)
+    {
+        var oldRT = RenderTexture.active;
+
+        var tex = new Texture2D(rt.width, rt.height);
+        RenderTexture.active = rt;
+        tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        tex.Apply();
+        byte[] bytes = tex.EncodeToJPG(quality);
+        string encoded = Convert.ToBase64String(bytes);
+        // convert.frombase64string
+        RenderTexture.active = oldRT;
+        return encoded;
+
+    }
+
+    public static float Duration(this UnityEngine.Video.VideoPlayer videoPlayer)
+    {
+        return videoPlayer.frameCount / videoPlayer.frameRate;
+    }
+
+
 #region  marshalling
    public static byte[] ToByteArray(this int[] intz)// 2017.08.18
     {
@@ -289,11 +318,13 @@ public static class zExt
     {
         if (text!=null) text.text=s;
     }
+    #endregion ui
+    #if ISHOWHIDE
     public static void Show(this Transform obj)
     {
         if (obj != null) Show(obj.gameObject);
     }
-    #endregion ui
+
     public static void Hide(this GameObject obj)
     {
         if (obj == null) return;
@@ -320,7 +351,7 @@ public static class zExt
 
     }
 
-
+    #endif
     public static GameObject[] GetGameObjectsWithComponent<T>() where T : Component
     {
         T[] foundObjects = GameObject.FindObjectsOfType<T>();
@@ -841,6 +872,23 @@ public static class zExt
         source += otherStrings[UnityEngine.Random.Range(0, otherStrings.Length)];
         return source;
     }
+
+    
+        /// <summary>
+        /// Loads an object from json. usage: newObject= newObject.FromJson&lt;typeOfNewObject&gt;(path)
+        /// </summary>
+        public static T LoadJson<T>(this T obj, string path)
+        {
+            //   if (!path.Contains(".json")) path+=".json";
+            //   if (!path.Contains(Application.streamingAssetsPath)) path = Application.streamingAssetsPath+"/"+path;
+			if (!File.Exists(path)) return default(T);
+            string dataAsJson = File.ReadAllText(path);
+            if (dataAsJson == null || dataAsJson.Length < 2)
+                Debug.Log("loading file:" + path + " failed");
+            else
+                obj = JsonUtility.FromJson<T>(dataAsJson);
+            return obj;
+        }
     /* 
         #if UNITY_EDITOR
     public static void SetTextureImporterFormat( this Texture2D texture, bool isReadable)
@@ -860,7 +908,12 @@ public static class zExt
         }
     }
         #endif*/
+}
 
+
+
+public static class GoExtensions
+{
 
     /// <summary>
     /// Gets children, if True Gets all children of children as well
@@ -916,183 +969,5 @@ public static class zExt
         return namedObjects.ToArray();
 
 
-    }
-}
-namespace Z
-{
-
-    public static class zExtGeneric
-    {
-
-
-        /// <summary>
-        /// Performs an equality test between two objects, if they are different, the assignmnent is made,
-        /// afterwards a call is invoked
-        /// </summary>
-        /// <param name="currentValue"> reference to your holder variable </param>
-        /// <param name="newValue"> a new value, nothing happens if its the same </param>
-
-
-    }
-}
-
-// too broad methods moved to namespace
-namespace Z.Extras
-{
-    public static class zExtExtra
-    {
-        public static void CallRandom<T>(this T target, params Action<T>[] actionsToCall)
-        {
-            if (actionsToCall != null && actionsToCall.Length > 0)
-            {
-                int index = UnityEngine.Random.Range(0, actionsToCall.Length);
-                actionsToCall[index].Invoke(target);
-            }
-        }
-        public static T CallRandom<T>(this T target, params Func<T, T>[] actionsToCall)
-        {
-            if (actionsToCall != null && actionsToCall.Length > 0)
-            {
-                int index = UnityEngine.Random.Range(0, actionsToCall.Length);
-                return actionsToCall[index].Invoke(target);
-            }
-            return target;
-        }
-
-
-        public static bool IsNullOrEmpty<T>(this List<T> source)
-        {
-            return (source == null || source.Count == 0);
-        }
-    public static T IfChanges<T>(this T currentValue, T oldValue, Action callbackWhenChanged)
-    {
-        if (!currentValue.Equals(oldValue))
-            callbackWhenChanged.Invoke();
-        return currentValue;
-    }
-
-    public static T IfChanges<T>(this T currentValue, T oldValue, Action<T> callbackWhenChanged)
-    {
-        if (!currentValue.Equals(oldValue))
-            callbackWhenChanged.Invoke(currentValue);
-        return currentValue;
-    }
-        public static void IfChanged<T>(ref T currentValue, T newValue, Action whenDifferent)
-        {
-            if (newValue == null && currentValue != null)
-            {
-                currentValue = newValue;
-                whenDifferent.Invoke();
-            }
-            else
-                if (!newValue.Equals(currentValue))
-            {
-                currentValue = newValue;
-                whenDifferent.Invoke();
-            }
-
-        }
-        public static void IfChanged<T>(ref T currentValue, T newValue, Action<T> whenDifferent)
-        {
-            if (newValue == null && currentValue != null)
-            {
-                currentValue = newValue;
-                if (whenDifferent != null) whenDifferent.Invoke(currentValue);
-            }
-            else
-            if (!newValue.Equals(currentValue))
-            {
-                currentValue = newValue;
-                if (whenDifferent != null) whenDifferent.Invoke(currentValue);
-            }
-
-        }
-        public static bool IfChanged<T>(this T newValue, ref T currentValue, Action<T> whenDifferent)
-        {
-            if (newValue == null && currentValue != null)
-            {
-                currentValue = newValue;
-                if (whenDifferent != null) whenDifferent.Invoke(currentValue);
-                return true;
-            }
-            else
-            if (!newValue.Equals(currentValue))
-            {
-                currentValue = newValue;
-                if (whenDifferent != null) whenDifferent.Invoke(currentValue);
-                return true;
-            }
-            return false;
-        }
-
-
-        public static bool IfChanged<T>(this T newValue, ref T currentValue, Action whenDifferent)
-        {
-            if (newValue == null && currentValue != null)
-            {
-                currentValue = newValue;
-                if (whenDifferent != null) whenDifferent.Invoke();
-                return true;
-            }
-            else
-            if (!newValue.Equals(currentValue))
-            {
-                currentValue = newValue;
-                if (whenDifferent != null) whenDifferent.Invoke();
-                return true;
-            }
-            return false;
-        }
-
-
-        /// <summary>
-        ///  Can be used where you want an action triggered when the value you are assigning is different then the current one
-        /// for example if you have a bool value myVal anw want to perform an action when its changed
-        /// <para></para>
-        /// myVal=GUILayout.Toggle(myVal).IfChanges( (x)=> {  myVal=x; /*do something else*/ });
-        /// Have in mind that the assignment will only happen after the callback u
-        /// </summary>
-        /* */
-      
-        public static string AsByteSize(this float byteCount)
-        {
-
-            if (byteCount < 10000) return Mathf.Round(byteCount / 1024) + "kb ";
-            else
-                return (byteCount / (1024 * 1024)).ToShortString() + "MB ";
-
-        }
-
-
-
-        public static bool ToBool(this int b)
-        {
-            return (b == 1);
-        }
-        public static int ToInt(this bool b)
-        {
-            return (b ? 1 : 0);
-        }
-
-        /// <summary>
-        /// Loads an object from json. usage: newObject= newObject.FromJson&lt;typeOfNewObject&gt;(path)
-        /// </summary>
-        public static T LoadJson<T>(this T obj, string path)
-        {
-            //   if (!path.Contains(".json")) path+=".json";
-            //   if (!path.Contains(Application.streamingAssetsPath)) path = Application.streamingAssetsPath+"/"+path;
-			if (!File.Exists(path)) return default(T);
-            string dataAsJson = File.ReadAllText(path);
-            if (dataAsJson == null || dataAsJson.Length < 2)
-                Debug.Log("loading file:" + path + " failed");
-            else
-                obj = JsonUtility.FromJson<T>(dataAsJson);
-            return obj;
-        }
-        [Obsolete]
-        public static T loadJson<T>(this T obj, string path)
-        {
-            return LoadJson(obj, path);
-        }
     }
 }
