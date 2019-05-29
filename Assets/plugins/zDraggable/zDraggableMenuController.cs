@@ -11,7 +11,7 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
 {
     zDraggable draggable;
     public GameObject menu;
-//    RectTransform hoverRect;
+    //    RectTransform hoverRect;
     public Text labelText;
     public RectTransform labelRect;
     public bool showMenuPreview;
@@ -25,15 +25,15 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
     public void OnPointerEnter(PointerEventData e)
     {
         CancelInvoke("showMenu");
-        Invoke("showMenu",0.1f);
-        
+        Invoke("showMenu", 0.1f);
+
     }
     public void OnPointerExit(PointerEventData e)
     {
         //        Debug.Log("hh");
-         CancelInvoke("hideMenu");
-        Invoke("hideMenu",0.1f);
-  
+        CancelInvoke("hideMenu");
+        Invoke("hideMenu", 0.1f);
+
     }
 
     void showMenu()
@@ -41,7 +41,7 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
         if (menu != null) menu.SetActive(true);
         if (menuAnimation != null)
             menuAnimation.expand();
-      
+
 
         CancelInvoke("disabl");
         //   hoverButton.SetActive(false);
@@ -77,8 +77,8 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
     {
         rect = GetComponent<RectTransform>();
         draggable = GetComponentInParent<zDraggable>();
-       // showMenu();
-       // hideMenu();
+        // showMenu();
+        // hideMenu();
     }
     void OnValidate()
     {
@@ -136,11 +136,14 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
             labelRect.anchorMin = new Vector2(0, 0f);
             labelRect.anchorMax = new Vector2(0, 0f);
             labelRect.pivot = new Vector2(1, 0);
-
-            menulRect.anchorMin = new Vector2(1, 1);
-            menulRect.anchorMax = new Vector2(1, 1);
-            menulRect.pivot = new Vector2(0, 1);
-            labelText.alignment = TextAnchor.LowerRight;
+            if (menulRect != null)
+            {
+                menulRect.anchorMin = new Vector2(1, 1);
+                menulRect.anchorMax = new Vector2(1, 1);
+                menulRect.pivot = new Vector2(0, 1);
+            }
+            if (labelText != null)
+                labelText.alignment = TextAnchor.LowerRight;
         }
         else
         {
@@ -153,11 +156,16 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
             labelRect.anchorMin = new Vector2(1, 0);
             labelRect.anchorMax = new Vector2(1, 0);
             labelRect.pivot = new Vector2(0, 0);
+            if (menulRect != null)
+            {
+                menulRect.anchorMin = new Vector2(0, 1);
+                menulRect.anchorMax = new Vector2(0, 1);
+                menulRect.pivot = new Vector2(1, 1);
+            }
+            if (labelText != null)
 
-            menulRect.anchorMin = new Vector2(0, 1);
-            menulRect.anchorMax = new Vector2(0, 1);
-            menulRect.pivot = new Vector2(1, 1);
-            labelText.alignment = TextAnchor.LowerLeft;
+
+                labelText.alignment = TextAnchor.LowerLeft;
         }
 
 
@@ -172,7 +180,7 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
     {
         menu.transform.SetParent(transform);
         menu.transform.localPosition = Vector3.zero;
-     //   menu.transform.localScale = Vector3.one;
+        //   menu.transform.localScale = Vector3.one;
     }
     public void setOpacity(float f)
     {
@@ -187,7 +195,7 @@ public class zDraggableMenuController : MonoBehaviour, IPointerExitHandler, IPoi
         f = f * 0.3f + 0.7f;
         draggable.setHorizontalPivot(zDraggable.AnchorModes.min);
         draggable.setVerticalPivot(zDraggable.AnchorModes.max);
-         draggable.rect.localScale = new Vector3(f, f, f);
+        draggable.rect.localScale = new Vector3(f, f, f);
 
 
     }
