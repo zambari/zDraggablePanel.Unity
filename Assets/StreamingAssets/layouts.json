@@ -1,0 +1,174 @@
+{
+    "panelData": [
+        {
+            "id": 1215696195,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 0.3333333432674408,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 1067257496,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": 16.639999389648439,
+            "prefW": -1.0,
+            "flexH": -1.0,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 1454303622,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 0.3333333432674408,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 1256487817,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 0.3333333432674408,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 1568505234,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 1.0,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 1279418529,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 1.0,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 517476100,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 1.0,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 1610949975,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 1.0,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 556212215,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 1.0,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 622421858,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 1.0,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 1549336739,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 1.0,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 1778296093,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 1.0,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 305985027,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 1.0,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 6563990,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 1.0,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 414998706,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 0.09370382130146027,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 1485451018,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 0.26153597235679629,
+            "flexW": 1.0,
+            "ignorelayout": false
+        },
+        {
+            "id": 533217691,
+            "minH": -1.0,
+            "minW": -1.0,
+            "prefH": -1.0,
+            "prefW": -1.0,
+            "flexH": 0.08880994468927384,
+            "flexW": 1.0,
+            "ignorelayout": false
+        }
+    ]
+}

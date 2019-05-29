@@ -337,9 +337,6 @@ public static class zRectExtensions
         rect.offsetMin = new Vector2(5, 5);
         rect.offsetMax = new Vector2(-5, -5);
         rect.localPosition = Vector2.zero;
-        //Debug.Log(" added child to ",parentRect.gameObject);
-        //	Debug.Log("new object is",rect.gameObject);
-
         return rect;
     }
 

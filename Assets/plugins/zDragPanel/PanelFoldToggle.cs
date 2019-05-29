@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-namespace Z
+namespace Z.DragRect
 {
     [RequireComponent(typeof(Toggle))]
     public class PanelFoldToggle : MonoBehaviour

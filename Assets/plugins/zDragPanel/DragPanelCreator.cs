@@ -6,6 +6,8 @@ using UnityEngine.UI;
 using UnityEditor;
 #endif
 using Z;
+namespace Z.DragRect
+{
 public class DragPanelCreator : MonoBehaviour
 {
 
@@ -28,7 +30,10 @@ public class DragPanelCreator : MonoBehaviour
         int numBorders = System.Enum.GetNames(typeof(zDragBorder.Borders)).Length - 1;
         GameObject frame = null;
         var dp = GetComponent<zDragPanel>();
-        if (dp == null) gameObject.AddComponent<zDragPanel>();
+        if (dp == null) 
+        { dp= gameObject.AddComponent<zDragPanel>();
+        Undo.RegisterCreatedObjectUndo(dp,"Drag rect creator");
+        }
         var fr = transform.Find("Frame");
         var borders = new zDragBorder[numBorders];
         if (fr != null) frame = fr.gameObject;
@@ -81,7 +86,7 @@ public class DragPanelCreator : MonoBehaviour
                 borders[i].SetDirection((zDragBorder.Borders)i);
                // if (i == (int)zDraggableBorder.Borders.L || i == (int)zDraggableBorder.Borders.R)
                 SetBorderWidth(borders[i], borderWidth, headerHeight);
-                EditorApplication.delayCall += () => Undo.DestroyObjectImmediate(this);
+                EditorApplication.delayCall += () =>{if (this!=null) Undo.DestroyObjectImmediate(this);};
             }
             frame.gameObject.SetActive(false);
             frame.gameObject.SetActive(true);
@@ -168,4 +173,5 @@ public class DragPanelCreator : MonoBehaviour
 
     }
 
+}
 }

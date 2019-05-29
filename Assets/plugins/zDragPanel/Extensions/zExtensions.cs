@@ -29,6 +29,7 @@
 // v0.66 dump to base64 rendertexure extention
 // v0.67 rect extensions moved to a diff classs
 // v0.68 showhide conditional
+// v0.69 moved to layoutextentins
 
 using UnityEngine;
 using System;
@@ -751,21 +752,6 @@ public static class zExt
         return children;
     }
 
-    public static LayoutElement[] GetActiveElements(this HorizontalLayoutGroup layout)
-    {
-        List<LayoutElement> elements = new List<LayoutElement>();
-        if (layout == null) return elements.ToArray();
-        for (int i = 0; i < layout.transform.childCount; i++)
-        {
-            GameObject thisChild = layout.transform.GetChild(i).gameObject;
-            LayoutElement le = thisChild.GetComponent<LayoutElement>();
-            if (le != null)
-            {
-                if (!le.ignoreLayout) elements.Add(le);
-            }
-        }
-        return elements.ToArray();
-    }
 
     public static Color Random(this Color c)
     {
