@@ -30,7 +30,7 @@ namespace Z
         {
             var lh = new List<GameObject>();
             var all = Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[];
-            // Debug.Log(all.Length+" total objects found");
+            // Debug.Log(all.Length+" total objects found");\
             foreach (var o in all)
             {
                 if (o.scene.isLoaded && o.hideFlags != HideFlags.None) lh.Add(o);
@@ -41,12 +41,19 @@ namespace Z
         static void UnhideAllObjects()
         {
             var hos = GetHiddenObjects();
-            foreach (var h in hos)
+            if (hos.Count > 0)
             {
-                Undo.RecordObject(h, "unhide");
-                h.hideFlags = HideFlags.None;
+                foreach (var h in hos)
+                {
+                    Undo.RegisterFullObjectHierarchyUndo(h, "unhide");
+                    //Undo.RecordObject(h, "unhide");
+                    h.hideFlags = HideFlags.None;
+                }
+                EditorApplication.RepaintHierarchyWindow();
+                Selection.objects = hos.ToArray();
             }
-            Selection.objects = hos.ToArray();
+            else 
+            Debug.Log("No hidden objects found");
         }
     }
 }

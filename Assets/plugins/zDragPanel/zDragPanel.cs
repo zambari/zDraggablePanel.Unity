@@ -33,14 +33,13 @@ public class zDragPanel : MonoBehaviour
     public HoverColors colors;
     RectTransform _rect;
     public RectTransform rect { get { if (_rect == null) _rect = GetComponent<RectTransform>(); return _rect; } }
-    zDragBorder.Borders hoverState;
     bool isDragging;
     List<zDragBorder> borders = new List<zDragBorder>();
     const int screenmargin = 5;
     public bool hideFrameInHierarchy;
 
     #region folding
-    [SerializeField] bool _isFolded;
+    [HideInInspector][SerializeField] bool _isFolded;
   
     float animtime = .2f;
     bool isFolding;
@@ -113,15 +112,7 @@ public class zDragPanel : MonoBehaviour
         rect.anchorMin = Vector2.one / 2;
         rect.sizeDelta = panelSetup.defaultSize;
     }
-    void Start()
-    {
-        //float w=rect.rect.width;
-        //float h=rect.rect.height;
-        //Debug.Log($" {name}   w{w}   h{h} sizedelta { rect.sizeDelta}");
-        // rect.SetSizeWithCurrentAnchors
-        //var sd=rect.sizeDelta;
-
-    }
+ 
     void Reset()
     {
         var bor = GetComponentsInChildren<zDragBorder>();
@@ -203,15 +194,12 @@ public class zDragPanel : MonoBehaviour
 
     public void SetHoverState(zDragBorder.Borders h)
     {
-        hoverState = h;
         if (!isDragging)
-        {
             for (int i = 0; i < borders.Count; i++)
             {
                 if (borders[i] != null)
                     borders[i].ShowHover(h);
             }
-        }
     }
 
 }

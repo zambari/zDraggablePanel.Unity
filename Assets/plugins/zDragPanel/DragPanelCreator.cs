@@ -49,8 +49,6 @@ public class DragPanelCreator : MonoBehaviour
             var borderRects = new RectTransform[numBorders];
 
             GameObject thisSegment;
-            Transform header = null;
-            //RectTransform segRect;
             var le = frame.AddComponent<LayoutElement>();
             le.ignoreLayout = true;
             for (int i = 0; i < numBorders; i++)
