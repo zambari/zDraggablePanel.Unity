@@ -1,5 +1,11 @@
 # zDraggablePanel v2 (Unity3D)
 
+### NOTE
+
+DraggablePanel has been superseded by https://github.com/zambari/LayoutPanel.UI.Unity, 
+
+### This is to be considered legacy code:
+
 Changes: masisvely simplified code, rarely used fragments revmoved
 
 Object creation moved to a seperate creator class:
